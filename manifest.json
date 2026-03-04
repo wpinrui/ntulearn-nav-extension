@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "NTULearn Nav Fix",
+  "version": "1.0.0",
+  "description": "Fixes broken back-button navigation in NTULearn (Blackboard Ultra).",
+  "content_scripts": [
+    {
+      "matches": ["https://ntulearn.ntu.edu.sg/*"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    }
+  ]
+}
