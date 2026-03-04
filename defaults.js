@@ -6,5 +6,5 @@ var DEFAULT_SETTINGS = {
   expandDepth: 0,
   pdfViewer: true,
   darkTheme: false,
-  surfaceDownload: true
+  surfaceDownload: false
 };

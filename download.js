@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  if (!window.__ntulearn.isEnabled("surfaceDownload", true)) return;
+  if (!window.__ntulearn.isEnabled("surfaceDownload", false)) return;
 
   // === Constants ===
   var OVERFLOW_BTN_SELECTOR =
