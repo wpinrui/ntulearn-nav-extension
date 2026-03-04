@@ -41,9 +41,9 @@
         + "{" + reinvert + "}\n";
     }
 
-    // PDF viewer background: set directly instead of re-inverting to avoid
-    // triple-inversion on child canvas elements.
-    css += d + " .page-container{background-color:#222 !important}\n";
+    // PDF viewer: skip re-inversion so the parent's global invert applies,
+    // giving the viewer a dark background naturally.
+    css += d + " bb-file-preview iframe{filter:none !important}\n";
 
     return css;
   }
