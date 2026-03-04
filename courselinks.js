@@ -24,7 +24,7 @@
       processed.add(link);
 
       // Set real href so ctrl+click / right-click "Open in new tab" works
-      link.href = "/ultra/courses/" + courseId + "/outline";
+      link.href = location.origin + "/ultra/courses/" + courseId + "/outline";
 
       // Prevent default on normal clicks so the existing Angular ng-click
       // handler can do SPA navigation without the browser also following the href
