@@ -14,7 +14,8 @@
     ".base-header",
     "course-banner",
     ".black-panel-header",
-    '[data-test-id="course-switcher-popover"]'
+    '[data-test-id="course-switcher-popover"]',
+    ".toolbar-inner"
   ];
 
   // Media elements that need re-inversion to preserve original appearance.
@@ -40,10 +41,6 @@
       css += DARK_CHROME_SELECTORS.map(function (s) { return d + " " + s; }).join(",")
         + "{" + reinvert + "}\n";
     }
-
-    // PDF viewer: skip re-inversion so the parent's global invert applies,
-    // giving the viewer a dark background naturally.
-    css += d + " bb-file-preview iframe{filter:none !important}\n";
 
     return css;
   }
