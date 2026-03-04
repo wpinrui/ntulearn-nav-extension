@@ -3,10 +3,16 @@
 
   // === Constants ===
   const STORAGE_KEY = "ntulearn-ext-courses";
+  const HIDDEN_KEY = "ntulearn-ext-hidden";
   const COURSES_PAGE_PATH = "/ultra/course";
   const POPOVER_SELECTOR = '[data-test-id="course-switcher-popover"]';
-  const COURSE_LINK_SELECTOR = 'a[href*="/ultra/courses/"][href$="/outline"]';
+  // Courses page uses AngularJS article cards, not <a href> links
+  const COURSE_CARD_SELECTOR = "article.course-element-card";
   const P = "ntulearn-ext"; // CSS class prefix
+  const SMALL_WORDS = new Set([
+    "a", "an", "and", "at", "by", "for", "from", "in", "of", "on", "or",
+    "the", "to", "with",
+  ]);
 
   // === CSS ===
   function injectStyles() {
@@ -61,11 +67,6 @@
         font-size: 14px;
         margin-bottom: 2px;
       }
-      .${P}-course-id {
-        font-size: 12px;
-        opacity: 0.6;
-        margin-bottom: 4px;
-      }
       .${P}-course-meta span {
         font-size: 11px;
         opacity: 0.5;
@@ -76,6 +77,44 @@
         text-align: center;
         opacity: 0.5;
         font-size: 14px;
+      }
+      .${P}-item-row {
+        display: flex;
+        align-items: flex-start;
+      }
+      .${P}-item-row a {
+        flex: 1;
+        min-width: 0;
+      }
+      .${P}-hide-btn {
+        flex-shrink: 0;
+        background: none;
+        border: none;
+        color: inherit;
+        opacity: 0;
+        cursor: pointer;
+        padding: 10px 8px;
+        font-size: 14px;
+        transition: opacity 0.15s;
+      }
+      .${P}-item:hover .${P}-hide-btn,
+      .${P}-hide-btn:focus {
+        opacity: 0.5;
+      }
+      .${P}-hide-btn:hover {
+        opacity: 1 !important;
+      }
+      .${P}-item-hidden a {
+        opacity: 0.35;
+      }
+      .${P}-item-hidden .${P}-hide-btn {
+        opacity: 0.4;
+      }
+      .${P}-hidden-count {
+        padding: 6px 12px;
+        font-size: 12px;
+        opacity: 0.4;
+        text-align: center;
       }
     `;
     (document.head || document.documentElement).appendChild(style);
@@ -88,9 +127,7 @@
         STORAGE_KEY,
         JSON.stringify({ timestamp: Date.now(), courses: courses })
       );
-    } catch (_) {
-      // localStorage full or unavailable
-    }
+    } catch (_) {}
   }
 
   function loadCachedCourses() {
@@ -104,34 +141,127 @@
     }
   }
 
+  function loadHidden() {
+    try {
+      var raw = localStorage.getItem(HIDDEN_KEY);
+      return raw ? new Set(JSON.parse(raw)) : new Set();
+    } catch (_) {
+      return new Set();
+    }
+  }
+
+  function saveHidden(hiddenSet) {
+    try {
+      localStorage.setItem(HIDDEN_KEY, JSON.stringify(Array.from(hiddenSet)));
+    } catch (_) {}
+  }
+
   function scrapeCourses() {
-    const links = document.querySelectorAll(COURSE_LINK_SELECTOR);
+    const cards = document.querySelectorAll(COURSE_CARD_SELECTOR);
     const courses = [];
     const seen = new Set();
 
-    links.forEach(function (link) {
-      const href = link.getAttribute("href");
-      if (seen.has(href)) return;
-      seen.add(href);
+    cards.forEach(function (card) {
+      var courseId = card.getAttribute("data-course-id");
+      if (!courseId || seen.has(courseId)) return;
+      seen.add(courseId);
 
-      const headings = link.querySelectorAll("h3");
-      const spans = link.querySelectorAll("span");
+      var nameEl = card.querySelector("h4.js-course-title-element");
+      var idEl = card.querySelector(".course-id span");
+      var statusEl = card.querySelector(".course-status span");
+
+      // Find the term heading: walk backwards from this card's parent
+      // to find the preceding h3 term header
+      var term = "";
+      var prev = card.closest("[ng-repeat-end]");
+      if (prev) {
+        var termHeader = prev.previousElementSibling;
+        while (termHeader && !termHeader.querySelector("h3")) {
+          termHeader = termHeader.previousElementSibling;
+        }
+        if (termHeader) {
+          var h3 = termHeader.querySelector("h3");
+          if (h3) term = h3.textContent.trim();
+        }
+      }
 
       courses.push({
-        href: href,
-        courseId: headings[0] ? headings[0].textContent.trim() : "",
-        courseName: headings[1] ? headings[1].textContent.trim() : "",
-        status: spans[0] ? spans[0].textContent.trim() : "",
-        semester: spans[1] ? spans[1].textContent.trim() : "",
+        href: location.origin + "/ultra/courses/" + courseId + "/outline",
+        courseId: idEl ? idEl.textContent.trim() : "",
+        courseName: nameEl ? nameEl.textContent.trim() : "",
+        status: statusEl ? statusEl.textContent.trim() : "",
+        semester: term,
       });
     });
 
     return courses;
   }
 
+  // === Formatting ===
+  function toTitleCase(text) {
+    return text
+      .split(/(\s+|-)/g)
+      .map(function (part, i) {
+        if (/^\s+$/.test(part) || part === "-") return part;
+        // Keep codes with digits as-is (e.g. TG07, I, II)
+        if (/\d/.test(part)) return part;
+        var lower = part.toLowerCase();
+        if (i > 0 && SMALL_WORDS.has(lower)) return lower;
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
+      })
+      .join("");
+  }
+
+  function formatCourseName(raw) {
+    // Parse "CODE(DATE):NAME" or "CODE(DATE):NAME - GROUP"
+    var match = raw.match(/^([^(]+)\([^)]*\):\s*(.+)$/);
+    if (!match) return { code: "", title: raw };
+    var code = match[1].trim().replace(/_/g, "/");
+    var title = match[2].trim();
+    // Convert ALL CAPS to title case, leave mixed case as-is
+    if (title === title.toUpperCase()) {
+      title = toTitleCase(title);
+    }
+    return { code: code, title: title };
+  }
+
+  // === Search ===
+  function getWords(text) {
+    return text.split(/[\s/:,\-()]+/).filter(Boolean);
+  }
+
+  function acronym(words) {
+    return words.map(function (w) { return w[0].toLowerCase(); }).join("");
+  }
+
+  function startsWithAny(words, q) {
+    for (var i = 0; i < words.length; i++) {
+      if (words[i].startsWith(q)) return true;
+    }
+    return false;
+  }
+
+  function matchesCourse(course, q) {
+    // Word-start matching (avoids "pp" matching "approaches")
+    var nameWords = getWords(course.courseName.toLowerCase());
+    var idWords = getWords(course.courseId.toLowerCase());
+    if (startsWithAny(nameWords, q)) return true;
+    if (startsWithAny(idWords, q)) return true;
+    if (q.length >= 2) {
+      var words = getWords(course.courseName);
+      // Full acronym (e.g. "taml" matches Teaching And Managing Learners)
+      if (acronym(words).includes(q)) return true;
+      // Filtered acronym (e.g. "tml" skipping stop words)
+      var filtered = words.filter(function (w) { return !SMALL_WORDS.has(w.toLowerCase()); });
+      if (acronym(filtered).includes(q)) return true;
+    }
+    return false;
+  }
+
   // === UI Layer ===
   function buildDropdownUI(container, courses) {
     container.innerHTML = "";
+    var hidden = loadHidden();
 
     var search = document.createElement("input");
     search.type = "text";
@@ -145,14 +275,19 @@
     function render(query) {
       list.innerHTML = "";
       var q = query.toLowerCase();
-      var filtered = courses.filter(function (c) {
-        return (
-          c.courseName.toLowerCase().includes(q) ||
-          c.courseId.toLowerCase().includes(q)
-        );
+      var isSearching = q.length > 0;
+      var matched = courses.filter(function (c) {
+        return matchesCourse(c, q);
       });
+      // When not searching, hide hidden courses; when searching, show all
+      var visible = isSearching
+        ? matched
+        : matched.filter(function (c) { return !hidden.has(c.href); });
+      var hiddenCount = isSearching
+        ? 0
+        : matched.length - visible.length;
 
-      if (filtered.length === 0) {
+      if (visible.length === 0 && hiddenCount === 0) {
         var msg = document.createElement("li");
         msg.className = P + "-no-results";
         msg.textContent = "No courses found";
@@ -160,41 +295,69 @@
         return;
       }
 
-      filtered.forEach(function (course) {
+      visible.forEach(function (course) {
+        var isHidden = hidden.has(course.href);
         var li = document.createElement("li");
-        li.className = P + "-item";
+        li.className = P + "-item" + (isHidden ? " " + P + "-item-hidden" : "");
+
+        var row = document.createElement("div");
+        row.className = P + "-item-row";
 
         var a = document.createElement("a");
         a.href = course.href;
         a.setAttribute("role", "menuitem");
 
+        var fmt = formatCourseName(course.courseName);
+
         var name = document.createElement("div");
         name.className = P + "-course-name";
-        name.textContent = course.courseName;
-
-        var id = document.createElement("div");
-        id.className = P + "-course-id";
-        id.textContent = course.courseId;
+        name.textContent = fmt.code
+          ? fmt.code + ": " + fmt.title
+          : fmt.title;
 
         var meta = document.createElement("div");
         meta.className = P + "-course-meta";
-        if (course.status) {
-          var s = document.createElement("span");
-          s.textContent = course.status;
-          meta.appendChild(s);
-        }
         if (course.semester) {
           var sem = document.createElement("span");
           sem.textContent = course.semester;
           meta.appendChild(sem);
         }
+        if (course.status) {
+          var s = document.createElement("span");
+          s.textContent = course.status;
+          meta.appendChild(s);
+        }
 
         a.appendChild(name);
-        a.appendChild(id);
         a.appendChild(meta);
-        li.appendChild(a);
+
+        var btn = document.createElement("button");
+        btn.className = P + "-hide-btn";
+        btn.textContent = isHidden ? "+" : "\u00d7";
+        btn.title = isHidden ? "Show in list" : "Hide from list";
+        btn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          if (hidden.has(course.href)) {
+            hidden.delete(course.href);
+          } else {
+            hidden.add(course.href);
+          }
+          saveHidden(hidden);
+          render(search.value);
+        });
+
+        row.appendChild(a);
+        row.appendChild(btn);
+        li.appendChild(row);
         list.appendChild(li);
       });
+
+      if (hiddenCount > 0) {
+        var hint = document.createElement("li");
+        hint.className = P + "-hidden-count";
+        hint.textContent = hiddenCount + " hidden course" + (hiddenCount > 1 ? "s" : "");
+        list.appendChild(hint);
+      }
     }
 
     search.addEventListener("input", function () {
@@ -226,7 +389,6 @@
     var contentArea = popover.querySelector('ul[role="menu"]');
     if (contentArea) contentArea = contentArea.parentElement;
     if (!contentArea) return;
-
     buildDropdownUI(contentArea, courses);
   }
 
