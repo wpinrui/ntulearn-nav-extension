@@ -1,6 +1,17 @@
 (function () {
   "use strict";
 
+  // === Settings check ===
+  var SETTINGS_EXT_KEY = "ntulearn-ext-settings";
+  function isEnabled(key, defaultValue) {
+    try {
+      var raw = localStorage.getItem(SETTINGS_EXT_KEY);
+      if (!raw) return defaultValue;
+      var settings = JSON.parse(raw);
+      return settings.hasOwnProperty(key) ? !!settings[key] : defaultValue;
+    } catch (_) { return defaultValue; }
+  }
+
   // === Constants ===
   const STORAGE_KEY = "ntulearn-ext-courses";
   const HIDDEN_KEY = "ntulearn-ext-hidden";
@@ -384,6 +395,7 @@
   const handledPopovers = new WeakSet();
 
   function handlePopover(popover) {
+    if (!isEnabled("courseSwitcher", true)) return;
     if (handledPopovers.has(popover)) return;
 
     const courses = loadCachedCourses();

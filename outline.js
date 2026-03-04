@@ -1,9 +1,31 @@
 (function () {
   "use strict";
 
+  // === Settings check ===
+  var SETTINGS_KEY = "ntulearn-ext-settings";
+  function isEnabled(key, defaultValue) {
+    try {
+      var raw = localStorage.getItem(SETTINGS_KEY);
+      if (!raw) return defaultValue;
+      var settings = JSON.parse(raw);
+      return settings.hasOwnProperty(key) ? !!settings[key] : defaultValue;
+    } catch (_) { return defaultValue; }
+  }
+  if (!isEnabled("autoExpandFolders", true)) return;
+
+  function getExpandDepth() {
+    try {
+      var raw = localStorage.getItem(SETTINGS_KEY);
+      if (!raw) return 0;
+      var settings = JSON.parse(raw);
+      var d = parseInt(settings.expandDepth, 10);
+      return d === 2 ? Infinity : (d === 1 ? 1 : 0);
+    } catch (_) { return 0; }
+  }
+
   // === Constants ===
   const EXPAND_DELAY = 0; // ms before clicking the next folder (tune as needed)
-  const MAX_EXPAND_DEPTH = 0; // 0 = top-level only, 1 = +subfolders, Infinity = all
+  const MAX_EXPAND_DEPTH = getExpandDepth();
   const FOLDER_BTN_SELECTOR =
     'button[data-analytics-id="content.item.folder.toggleFolder.button"]';
   const OUTLINE_RE = /\/ultra\/courses\/[^/]+\/outline$/;
