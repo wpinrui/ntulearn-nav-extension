@@ -31,15 +31,14 @@
     var d = "html." + DARK_CLASS;
     var reinvert = "filter:invert(1) hue-rotate(180deg) !important";
 
-    var css = d + "{" + reinvert + ";background-color:#111 !important}\n";
-
-    css += MEDIA_SELECTORS.map(function (s) { return d + " " + s; }).join(",")
-      + "{" + reinvert + "}\n";
-
-    if (DARK_CHROME_SELECTORS.length) {
-      css += DARK_CHROME_SELECTORS.map(function (s) { return d + " " + s; }).join(",")
+    function filterBlock(selectors) {
+      return selectors.map(function (s) { return d + " " + s; }).join(",")
         + "{" + reinvert + "}\n";
     }
+
+    var css = d + "{" + reinvert + ";background-color:#111 !important}\n";
+    css += filterBlock(MEDIA_SELECTORS);
+    if (DARK_CHROME_SELECTORS.length) css += filterBlock(DARK_CHROME_SELECTORS);
 
     return css;
   }
