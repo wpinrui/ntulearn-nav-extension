@@ -4,6 +4,7 @@
   // === Constants ===
   const COURSES_PAGE_PATH = "/ultra/course";
   const LINK_SELECTOR = 'a.course-title[href="javascript:void(0);"]';
+  const FIX_DELAY = 200; // ms debounce before processing new links
 
   // === State ===
   const processed = new WeakSet();
@@ -37,7 +38,7 @@
 
   function scheduleFix() {
     clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(fixCourseLinks, 200);
+    debounceTimer = setTimeout(fixCourseLinks, FIX_DELAY);
   }
 
   // === Observer lifecycle ===
