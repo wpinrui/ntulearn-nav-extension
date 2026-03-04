@@ -4,6 +4,11 @@
   "version": "2.0.0",
   "description": "A smarter NTULearn experience — course switcher, folder expansion, download buttons, dark theme, and more.",
   "permissions": ["storage"],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "ntuitive@wpinrui"
+    }
+  },
   "icons": {
     "16": "icon16.png",
     "48": "icon48.png",
