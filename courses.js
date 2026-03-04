@@ -263,11 +263,10 @@
     if (startsWithAny(nameWords, q)) return true;
     if (startsWithAny(idWords, q)) return true;
     if (q.length >= 2) {
-      const words = getWords(course.courseName);
       // Full acronym (e.g. "taml" matches Teaching And Managing Learners)
-      if (acronym(words).includes(q)) return true;
+      if (acronym(nameWords).includes(q)) return true;
       // Filtered acronym (e.g. "tml" skipping stop words)
-      const filtered = words.filter(function (w) { return !SMALL_WORDS.has(w.toLowerCase()); });
+      const filtered = nameWords.filter(function (w) { return !SMALL_WORDS.has(w); });
       if (acronym(filtered).includes(q)) return true;
     }
     return false;
