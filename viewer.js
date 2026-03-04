@@ -16,29 +16,12 @@
     const style = document.createElement("style");
     style.id = STYLE_ID;
     style.textContent = `
-      #content-tab-panel-content .panel-content-inner {
-        flex: 1 1 auto !important;
-        display: flex !important;
-        flex-direction: column !important;
-        min-height: 0 !important;
-      }
-      bb-file-preview {
-        flex: 1 1 auto !important;
-        display: flex !important;
-        flex-direction: column !important;
-        min-height: 0 !important;
-      }
       bb-file-preview > div {
-        flex: 1 1 auto !important;
-        display: flex !important;
-        flex-direction: column !important;
-        min-height: 0 !important;
+        height: 100% !important;
       }
       bb-file-preview iframe {
-        flex: 1 1 auto !important;
-        width: 100% !important;
-        min-height: 0 !important;
         height: 100% !important;
+        width: 100% !important;
       }
     `;
     (document.head || document.documentElement).appendChild(style);
@@ -62,15 +45,38 @@
       });
   }
 
+  // === Viewer Resize ===
+  // Measure the preview element's position and set its height to fill
+  // the remaining viewport. Uses calc(100vh - ...) so it stays responsive
+  // to window resize without needing a resize listener.
+  let lastTop = -1;
+
+  function resizeViewer() {
+    const preview = document.querySelector("bb-file-preview");
+    if (!preview) return;
+    const rect = preview.getBoundingClientRect();
+    const top = Math.round(rect.top);
+    if (top > 0 && top !== lastTop) {
+      lastTop = top;
+      preview.style.height = "calc(100vh - " + top + "px - 8px)";
+    }
+  }
+
   // === Observer Lifecycle ===
   let observer = null;
+
+  function onMutation() {
+    fixGrowIframe();
+    resizeViewer();
+  }
 
   function startObserver() {
     if (observer || !document.body) return;
     injectStyles();
-    observer = new MutationObserver(fixGrowIframe);
+    observer = new MutationObserver(onMutation);
     observer.observe(document.body, { childList: true, subtree: true });
     fixGrowIframe();
+    resizeViewer();
   }
 
   function stopObserver() {
@@ -78,6 +84,7 @@
       observer.disconnect();
       observer = null;
     }
+    lastTop = -1;
     removeStyles();
   }
 
