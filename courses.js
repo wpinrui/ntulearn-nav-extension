@@ -385,7 +385,6 @@
 
   function handlePopover(popover) {
     if (handledPopovers.has(popover)) return;
-    handledPopovers.add(popover);
 
     const courses = loadCachedCourses();
     if (!courses || courses.length === 0) return;
@@ -395,7 +394,8 @@
     // The content area is the second child div (contains "Recent courses" and the list).
     let contentArea = popover.querySelector('ul[role="menu"]');
     if (contentArea) contentArea = contentArea.parentElement;
-    if (!contentArea) return;
+    if (!contentArea) return; // Children not rendered yet — retry on next mutation
+    handledPopovers.add(popover);
     buildDropdownUI(contentArea, courses);
   }
 
@@ -419,7 +419,7 @@
   }
 
   function startScrapingObserver() {
-    if (scrapingObserver) return;
+    if (scrapingObserver || !document.body) return;
     scrapingObserver = new MutationObserver(scheduleScrape);
     scrapingObserver.observe(document.body, {
       childList: true,
