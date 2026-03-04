@@ -11,6 +11,7 @@
   // Maintain as an array for easy addition/removal during testing.
   var DARK_CHROME_SELECTORS = [
     ".bb-course-navigation",
+    ".base-header",
     '[data-test-id="course-switcher-popover"]'
   ];
 
