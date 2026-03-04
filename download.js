@@ -64,12 +64,11 @@
       .then(function (res) { return res.json(); })
       .then(function (data) {
         if (data.results && data.results.length > 0) {
-          var a = document.createElement("a");
-          a.href = apiBase + "/" + data.results[0].id + "/download";
-          a.style.display = "none";
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
+          var iframe = document.createElement("iframe");
+          iframe.style.display = "none";
+          iframe.src = apiBase + "/" + data.results[0].id + "/download";
+          document.body.appendChild(iframe);
+          setTimeout(function () { iframe.remove(); }, 60000);
         }
       })
       .catch(function (err) {
