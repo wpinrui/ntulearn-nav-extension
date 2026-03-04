@@ -63,13 +63,21 @@
     fetch(apiBase, { credentials: "same-origin" })
       .then(function (res) { return res.json(); })
       .then(function (data) {
-        if (data.results && data.results.length > 0) {
-          var iframe = document.createElement("iframe");
-          iframe.style.display = "none";
-          iframe.src = apiBase + "/" + data.results[0].id + "/download";
-          document.body.appendChild(iframe);
-          setTimeout(function () { iframe.remove(); }, 60000);
-        }
+        if (!data.results || data.results.length === 0) return;
+        var att = data.results[0];
+        var dlUrl = apiBase + "/" + att.id + "/download";
+        return fetch(dlUrl, { credentials: "same-origin", redirect: "follow" })
+          .then(function (res) { return res.blob(); })
+          .then(function (blob) {
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement("a");
+            a.href = url;
+            a.download = att.fileName || "download";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+          });
       })
       .catch(function (err) {
         console.error("[NTULearn Nav Fix] Download failed:", err);
