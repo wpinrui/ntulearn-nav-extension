@@ -35,10 +35,11 @@
   // --- Strategy 2: MutationObserver on close button ---
   const CLOSE_BUTTON_SELECTOR =
     'button[data-bbui-close="true"], bb-close-panel button';
+  const fixedButtons = new WeakSet();
 
   function handleCloseButton(button) {
-    if (button.__ntuNavFixed) return;
-    button.__ntuNavFixed = true;
+    if (fixedButtons.has(button)) return;
+    fixedButtons.add(button);
 
     button.addEventListener(
       "click",
