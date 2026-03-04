@@ -61,13 +61,14 @@
 
   const observer = new MutationObserver(scanForCloseButtons);
 
-  if (document.body) {
+  function startObserver() {
     scanForCloseButtons();
     observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  if (document.body) {
+    startObserver();
   } else {
-    document.addEventListener("DOMContentLoaded", function () {
-      scanForCloseButtons();
-      observer.observe(document.body, { childList: true, subtree: true });
-    });
+    document.addEventListener("DOMContentLoaded", startObserver);
   }
 })();
