@@ -12,13 +12,15 @@
       "matches": ["https://ntulearn.ntu.edu.sg/*"],
       "js": ["defaults.js", "bridge.js"],
       "run_at": "document_start",
-      "world": "ISOLATED"
+      "world": "ISOLATED",
+      "all_frames": true
     },
     {
       "matches": ["https://ntulearn.ntu.edu.sg/*"],
       "js": ["settings.js", "darktheme.js", "content.js", "courses.js", "courselinks.js", "outline.js", "viewer.js"],
       "run_at": "document_start",
-      "world": "MAIN"
+      "world": "MAIN",
+      "all_frames": true
     }
   ]
 }
