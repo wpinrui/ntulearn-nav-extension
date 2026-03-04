@@ -88,13 +88,9 @@
   window.addEventListener("popstate", onNavigate);
 
   // === Bootstrap ===
-  function start() {
-    onNavigate();
-  }
-
   if (document.body) {
-    start();
+    onNavigate();
   } else {
-    document.addEventListener("DOMContentLoaded", start);
+    document.addEventListener("DOMContentLoaded", onNavigate);
   }
 })();
