@@ -27,12 +27,17 @@
       // Set real href so ctrl+click / right-click "Open in new tab" works
       link.href = location.origin + "/ultra/courses/" + courseId + "/outline";
 
-      // Prevent default on normal clicks so the existing Angular ng-click
-      // handler can do SPA navigation without the browser also following the href
+      // Capture-phase handler fires before Angular's ng-click (bubbling phase).
+      // Modifier/middle clicks: suppress Angular so only a new tab opens and
+      // the current page stays put. Normal clicks: just prevent the browser
+      // from following the href while Angular does SPA navigation.
       link.addEventListener("click", function (e) {
-        if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+        if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) {
+          e.stopImmediatePropagation();
+          return;
+        }
         e.preventDefault();
-      });
+      }, true);
     });
   }
 
