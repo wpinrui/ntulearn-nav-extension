@@ -18,12 +18,16 @@
   const originalPushState = history.pushState.bind(history);
 
   history.pushState = function (state, title, url) {
-    if (url) {
-      const targetPath = new URL(url, location.origin).pathname;
-      if (isDocumentView(location.href) && isOutlineView(targetPath)) {
-        history.back();
-        return;
+    try {
+      if (url) {
+        const targetPath = new URL(url, location.origin).pathname;
+        if (isDocumentView(location.pathname) && isOutlineView(targetPath)) {
+          history.back();
+          return;
+        }
       }
+    } catch (_) {
+      // Fall through to original pushState if URL parsing fails
     }
     return originalPushState(state, title, url);
   };
@@ -39,7 +43,7 @@
     button.addEventListener(
       "click",
       function (e) {
-        if (isDocumentView(location.href)) {
+        if (isDocumentView(location.pathname)) {
           e.stopImmediatePropagation();
           e.preventDefault();
           history.back();
