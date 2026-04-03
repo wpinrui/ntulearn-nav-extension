@@ -127,6 +127,9 @@
       .${P}-item-hidden .${P}-vis-btn {
         opacity: 0.5;
       }
+      .${P}-content-area > *:not(.${P}-container) {
+        display: none !important;
+      }
     `;
     (document.head || document.documentElement).appendChild(style);
   }
@@ -398,16 +401,12 @@
     if (!contentArea) return; // Children not rendered yet — retry on next mutation
     handledPopovers.add(popover);
 
-    // Preserve Ultra's DOM so React can still reconcile, but occlude it
-    // with the extension's UI. Using position/overflow instead of hiding
-    // individual children avoids a race where late-rendering React nodes
-    // escape a display:none pass on first open.
-    contentArea.style.position = "relative";
-    contentArea.style.overflow = "hidden";
+    // Hide Ultra's children via CSS class selector rather than iterating
+    // them individually — the rule applies continuously, so late-rendering
+    // React nodes are hidden automatically (no race condition on first open).
+    contentArea.classList.add(P + "-content-area");
     const extContainer = document.createElement("div");
-    extContainer.style.position = "relative";
-    extContainer.style.zIndex = "1";
-    extContainer.style.background = "inherit";
+    extContainer.classList.add(P + "-container");
     contentArea.appendChild(extContainer);
     buildDropdownUI(extContainer, courses);
   }
