@@ -276,7 +276,6 @@
 
   // === UI Layer ===
   function buildDropdownUI(container, courses) {
-    container.innerHTML = "";
     const hidden = loadHidden();
 
     const search = document.createElement("input");
@@ -398,7 +397,15 @@
     if (contentArea) contentArea = contentArea.parentElement;
     if (!contentArea) return; // Children not rendered yet — retry on next mutation
     handledPopovers.add(popover);
-    buildDropdownUI(contentArea, courses);
+
+    // Hide Ultra's original children instead of destroying them —
+    // React still owns these nodes and must be able to reconcile them.
+    for (const child of contentArea.children) {
+      child.style.display = "none";
+    }
+    const extContainer = document.createElement("div");
+    contentArea.appendChild(extContainer);
+    buildDropdownUI(extContainer, courses);
   }
 
   function scanForPopover() {
