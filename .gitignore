@@ -1,6 +1,6 @@
 # Agent files (not tracked in git)
 .claude/
-agents/
+.agent/
 
 # OS files
 .DS_Store
