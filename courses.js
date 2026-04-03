@@ -127,6 +127,9 @@
       .${P}-item-hidden .${P}-vis-btn {
         opacity: 0.5;
       }
+      .${P}-content-area > *:not(.${P}-container) {
+        display: none !important;
+      }
     `;
     (document.head || document.documentElement).appendChild(style);
   }
@@ -276,7 +279,6 @@
 
   // === UI Layer ===
   function buildDropdownUI(container, courses) {
-    container.innerHTML = "";
     const hidden = loadHidden();
 
     const search = document.createElement("input");
@@ -398,7 +400,15 @@
     if (contentArea) contentArea = contentArea.parentElement;
     if (!contentArea) return; // Children not rendered yet — retry on next mutation
     handledPopovers.add(popover);
-    buildDropdownUI(contentArea, courses);
+
+    // Hide Ultra's children via CSS class selector rather than iterating
+    // them individually — the rule applies continuously, so late-rendering
+    // React nodes are hidden automatically (no race condition on first open).
+    contentArea.classList.add(P + "-content-area");
+    const extContainer = document.createElement("div");
+    extContainer.classList.add(P + "-container");
+    contentArea.appendChild(extContainer);
+    buildDropdownUI(extContainer, courses);
   }
 
   function scanForPopover() {
