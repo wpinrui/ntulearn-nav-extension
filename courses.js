@@ -398,12 +398,16 @@
     if (!contentArea) return; // Children not rendered yet — retry on next mutation
     handledPopovers.add(popover);
 
-    // Hide Ultra's original children instead of destroying them —
-    // React still owns these nodes and must be able to reconcile them.
-    for (const child of contentArea.children) {
-      child.style.display = "none";
-    }
+    // Preserve Ultra's DOM so React can still reconcile, but occlude it
+    // with the extension's UI. Using position/overflow instead of hiding
+    // individual children avoids a race where late-rendering React nodes
+    // escape a display:none pass on first open.
+    contentArea.style.position = "relative";
+    contentArea.style.overflow = "hidden";
     const extContainer = document.createElement("div");
+    extContainer.style.position = "relative";
+    extContainer.style.zIndex = "1";
+    extContainer.style.background = "inherit";
     contentArea.appendChild(extContainer);
     buildDropdownUI(extContainer, courses);
   }
